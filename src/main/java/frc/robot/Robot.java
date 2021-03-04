@@ -9,15 +9,13 @@
 
 //Robot 1-25, http://10.51.41.11:5801/ 
 
-/* release me from my mortal coil, i beseech thee
-
 /* to do list
   organize imports
 */
 package frc.robot;
 
-import com.kauailabs.navx.frc.AHRS;
-import com.kauailabs.navx.frc.AHRS.SerialDataType;
+//import com.kauailabs.navx.frc.AHRS;
+//import com.kauailabs.navx.frc.AHRS.SerialDataType;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -79,12 +77,6 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_control = new SendableChooser<>();
 
   String Mode = "manual";// manual v. sensor
-
-  private String m_challengeSelected;
-  private final SendableChooser<String> m_challange = new SendableChooser<>();
-
-  private static final String kComp = "Competition";
-  private static final String kTask1 = "Task1";
 
   Joystick gamePad0 = new Joystick(0);
   /*
@@ -171,21 +163,6 @@ public class Robot extends TimedRobot {
   double y;
   double a;
   double v;
-  
-  AHRS navx;
-  String navDrive = "null";
-  int setAngle = 0;
-  double angledYaw;
-  double AOC = 85; //Area of correction
-  Timer curveTimer;
-  double ratioNavX;
-
-  Timer challengeTimer = new Timer();
-  int challengeTimerCheckpoint;
-  double route;
-
-  double minCorrectNavX = .34;
-  double maxCorrectNavX = .65;
 
   int seenColor;
 
@@ -215,10 +192,6 @@ public class Robot extends TimedRobot {
     m_control.setDefaultOption("Manual", kManual);
     m_control.addOption("Sensor", kSensor);
 
-    SmartDashboard.putData("Game Mode", m_challange);
-    m_challange.setDefaultOption("Competition", kComp);
-    m_challange.addOption("Task1", kTask1);
-
     // navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData,
     // (byte)50);
     right0.setInverted(true);
@@ -247,18 +220,6 @@ public class Robot extends TimedRobot {
     /* var yes = */table.getEntry("ledMode").setNumber(3);
     /* System.out.println("asd:" + yes); */
     memBall = 0;
-
-    navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50);
-    navx.zeroYaw();
-    navx.reset();
-    navDrive = "null";
-
-    curveTimer.stop();
-    curveTimer.reset();
-
-    challengeTimer.stop();
-    challengeTimer.reset();
-
   }
 
   /**
@@ -358,49 +319,6 @@ public class Robot extends TimedRobot {
     // disXnum = ((h2-h1)/Math.tan((a1-y)*Math.PI/180));
     disXnum = (h2 - h1) / (Math.tan((a1 + y) * Math.PI / 180)) + 7; // +7 is distance between shooter and limelight
 
-    if (Math.abs(yaw - setAngle) <= 180){
-      angledYaw = yaw - setAngle;
-    }else{
-      angledYaw = -Math.signum(yaw - setAngle)*(360-Math.abs(yaw - setAngle));
-    }
-
-    if(Math.abs(angledYaw) < (AOC)) {
-      ratioNavX =angledYaw/AOC;
-    } else if (angledYaw > 0){
-      ratioNavX = 1;
-    } else { ratioNavX = -1;}
-
-    //double sineWithSignum = Math.signum(ratioNavX)*(1-min)*Math.sin(ratioNavX*Math.PI/2)+(1+min)/2;
-    double sineNavX = Math.signum(ratioNavX)*((maxCorrectNavX - minCorrectNavX)/2)*Math.sin(Math.PI*(ratioNavX-.5))+Math.signum(ratioNavX)*((maxCorrectNavX + minCorrectNavX)/2);
-    
-  if(navDrive.length() > 0) {
-    switch (navDrive.charAt(0)) {
-      default :
-      minCorrectNavX = .39;
-      maxCorrectNavX = .65;
-      AOC = 85;
-      break;
-      case 'T' :
-        minCorrectNavX = .39; //.34
-        maxCorrectNavX = .65;
-        AOC = 85;
-
-        driveTrain.tankDrive(-sineNavX,sineNavX);
-        break;
-      case 'D' :
-        minCorrectNavX = 0.5;//.4
-        maxCorrectNavX = 1;//.75
-        AOC = 15;//15
-
-        double cCorrection = (-sineNavX > 0) ? -sineNavX : minCorrectNavX;
-        double ccCorrection  = (sineNavX > 0) ? sineNavX : minCorrectNavX;
-
-        driveTrain.tankDrive(cCorrection,ccCorrection); 
-    
-        break;
-  }
-  }
-
     SmartDashboard.putNumber("LimelightX", x);
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightA", a);
@@ -419,11 +337,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("aimnum", aimnum);
     SmartDashboard.putNumber("Velocity", veloFwoosh);
     SmartDashboard.putNumber("airtime", airtim);
-
-    SmartDashboard.putNumber("leftStick", gamePad0.getRawAxis(1));
-    SmartDashboard.putNumber("rightStick", gamePad0.getRawAxis(5));
-    SmartDashboard.putNumber("challengeTimer", challengeTimer.get());
-    SmartDashboard.putNumber("route number", challengeTimer.get());
   }
 
   @Override
@@ -436,19 +349,6 @@ public class Robot extends TimedRobot {
     autoPeriod.reset();
     autoPeriod.stop();
     table.getEntry("ledMode").setNumber(3);
-
-    table.getEntry("ledMode").setNumber(3);
-
-    navx.zeroYaw();
-    navx.reset();
-
-    curveTimer.stop();
-    curveTimer.reset();
-
-    challengeTimer.stop();
-    challengeTimer.reset();
-    navDrive = "null";
-
 
   }
 
@@ -519,17 +419,6 @@ public class Robot extends TimedRobot {
 
     shooter.setInverted(true);
 
-    table.getEntry("ledMode").setNumber(3);
-
-    navx.zeroYaw();
-    navx.reset();
-
-    curveTimer.stop();
-    curveTimer.reset();
-
-    challengeTimer.stop();
-    challengeTimer.reset();
-    navDrive = "null";
   }
 
   /**
@@ -819,29 +708,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
-  }
-
-  public void turnThing(int angle, int time) {
-    setAngle = angle;
-    if(((int)challengeTimer.get()) == time) { //move forward to first ball
-      challengeTimer.stop();
-      driveTrain.tankDrive(0, 0);
-      if (Math.abs(angledYaw) <= 2) {
-        navDrive = "null";
-        challengeTimer.start();
-      } else {
-        navDrive = "Turn";
-        challengeTimer.stop();
-        }
-      }
-  }
-
-  public void curveDrive(double angle, double time){
-    if(curveTimer.get() == 0){
-      curveTimer.start();
-    }
-
-
   }
 
 }

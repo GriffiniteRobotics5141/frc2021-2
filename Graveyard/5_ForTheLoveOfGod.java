@@ -9,6 +9,8 @@
 
 //Robot 1-25, http://10.51.41.11:5801/ 
 
+/* release me from my mortal coil, i beseech thee
+
 /* to do list
   organize imports
 */
@@ -30,7 +32,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.SerialPort;
-//import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.networktables.NetworkTable;
@@ -41,9 +43,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.util.Color;
 
-import com.revrobotics.ColorSensorV3;
-import com.revrobotics.ColorMatchResult;
-import com.revrobotics.ColorMatch;
 
 import com.ctre.phoenix.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -146,21 +145,19 @@ public class Robot extends TimedRobot {
   boolean intakeOn = false;
   String colorString;
   String gameData;
-  String nextColor = "Purple Baby";
+  String nextColor = "PBJ Baby";
   String gameSadFace = "Mehh";
   boolean manualMode = true;
 
   private final I2C.Port cPort = I2C.Port.kOnboard;
-  private final ColorSensorV3 cSensor = new ColorSensorV3(cPort);
+  /*private final ColorSensorV3 cSensor = new ColorSensorV3(cPort);
   private final ColorMatch m_colorMatcher = new ColorMatch();
   private final Color BlueTarget = ColorMatch.makeColor(0.143, 0.427, 0.429);
   private final Color GreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
   private final Color RedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
-  private final Color YellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
+  private final Color YellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);*/
 
-  double yaw;
-
-  // NetworkTable table;
+  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx;
   NetworkTableEntry ty;
   NetworkTableEntry ta;
@@ -177,6 +174,7 @@ public class Robot extends TimedRobot {
   double AOC = 85; //Area of correction
   Timer curveTimer;
   double ratioNavX;
+  double yaw;
 
   Timer challengeTimer = new Timer();
   int challengeTimerCheckpoint;
@@ -194,7 +192,7 @@ public class Robot extends TimedRobot {
   int memBall;
 
   Timer warmUp = new Timer();
-  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -217,18 +215,16 @@ public class Robot extends TimedRobot {
     m_challange.setDefaultOption("Competition", kComp);
     m_challange.addOption("Task1", kTask1);
 
-    // navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData,
-    // (byte)50);
     right0.setInverted(true);
     right1.setInverted(true);
     colMotor.setInverted(true);
     conveyor.setInverted(true);
     CameraServer.getInstance().startAutomaticCapture();
 
-    m_colorMatcher.addColorMatch(BlueTarget);
+    /*m_colorMatcher.addColorMatch(BlueTarget);
     m_colorMatcher.addColorMatch(GreenTarget);
     m_colorMatcher.addColorMatch(RedTarget);
-    m_colorMatcher.addColorMatch(YellowTarget);
+    m_colorMatcher.addColorMatch(YellowTarget);*/
 
     autoPilotTimer.reset();
     autoPilotTimer.stop();
@@ -236,8 +232,6 @@ public class Robot extends TimedRobot {
     autonamousTimer.stop();
     autoPeriod.reset();
     autoPeriod.stop();
-    // navx.reset();
-    // navx.zeroYaw();
     colMotor.set(0);
     rotatenum = 0;
     seenColor = 0;
@@ -270,7 +264,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    int proximity = cSensor.getProximity();
+   /* int proximity = cSensor.getProximity();
     Color detectedColor = cSensor.getColor();
     ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
     gameData = DriverStation.getInstance().getGameSpecificMessage();
@@ -295,8 +289,9 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Proximity", proximity);
     SmartDashboard.putNumber("Confidence", match.confidence);
     SmartDashboard.putString("Detected Color", colorString);
-    // double yaw = navx.getYaw();
+    // double yaw = navx.getYaw();*/
 
+    yaw = navx.getYaw();
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry tx = table.getEntry("tx");
     NetworkTableEntry ty = table.getEntry("ty");
@@ -498,6 +493,53 @@ public class Robot extends TimedRobot {
       // funny
       driveTrain.tankDrive(0, 0);
       break;
+    }
+
+
+    SmartDashboard.putNumber("challengeTimer", challengeTimer.get());
+    SmartDashboard.putNumber("route number", challengeTimer.get());
+  
+      switch (m_challengeSelected) {
+        case kComp:
+          // Put left auto targetting and shooting code here
+          //driveTrain.tankDrive(-.5, .5);
+          break;
+
+        //Use Yellow Limelight Snapshot setting
+        case kTask1:
+          if (challengeTimer.get() == 0) {
+            route = y;
+            challengeTimer.start();
+          } 
+
+          if( route <= 0 ) { //blue config
+
+            if(challengeTimer.get() < 2) { // following seconds are ~1 second(s) are shorter
+              navDrive = "Drive";
+            } else if(((int)challengeTimer.get()) == 2){
+              turnThing(180, 2);
+            } 
+            else if (challengeTimer.get() < 5) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else if(((int)challengeTimer.get()) == 5){
+              turnThing(0, 5);
+            } else {
+              challengeTimer.reset();
+            }
+
+
+            }
+
+          
+          
+           else  { //red config
+              //
+            }
+
+
+          break;
+        default:
+          break;
     }
 
   }
