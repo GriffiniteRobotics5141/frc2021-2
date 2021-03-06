@@ -182,7 +182,7 @@ public class Robot extends TimedRobot {
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
 
   String navDrive = "null";
-  int setAngle = 0;
+  double setAngle = 0;
   double angledYaw;
   double AOC = 85; //Area of correction
 
@@ -391,14 +391,14 @@ public class Robot extends TimedRobot {
       break;
       case 'T' :
         minCorrectNavX = .34; //.34
-        maxCorrectNavX = .65;
+        maxCorrectNavX = .5;
         AOC = 85;
 
         driveTrain.tankDrive(-sineNavX,sineNavX);
         break;
       case 'D' :
-        minCorrectNavX = 0.5;//.4
-        maxCorrectNavX = 1;//.75
+        minCorrectNavX = 0.51;//.4
+        maxCorrectNavX = 0.81;//.75
         AOC = 15;//15
 
         double cCorrection = (-sineNavX > 0) ? -sineNavX : minCorrectNavX;
@@ -436,6 +436,13 @@ public class Robot extends TimedRobot {
 
     shooter.set(ControlMode.PercentOutput, 0);
 
+    manualMode = false;
+
+    memBall = 0;
+
+    ultrasonic1.setEnabled(true);
+    ultrasonic2.setEnabled(true);
+    ultrasonic3.setEnabled(true);
 
   }
 
@@ -444,13 +451,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
+    doUltraSonics();
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry tx = table.getEntry("tx");
     NetworkTableEntry ty = table.getEntry("ty");
     NetworkTableEntry ta = table.getEntry("ta");
     NetworkTableEntry tv = table.getEntry("tv");
 
-    switch (m_autoSelected) {
+    /*switch (m_autoSelected) {
     case kLeft:
       // Put left auto code here
       driveTrain.tankDrive(-.5, .5);
@@ -465,7 +473,7 @@ public class Robot extends TimedRobot {
       }
       if (autonamousTimer.get() <= 1) {
         driveTrain.tankDrive(-.5, -.5);
-        shooter.set(ControlMode.PercentOutput, 0.8);
+        shooter.set(ControlMode.PercentOutput, 0); //0.8
       } else if (v != 1) {
         driveTrain.tankDrive(.45, -.45);
       } else if (v == 1) {
@@ -487,7 +495,7 @@ public class Robot extends TimedRobot {
       // funny
       driveTrain.tankDrive(0, 0);
       break;
-    }
+    }*/
 
 
     SmartDashboard.putNumber("challengeTimer", challengeTimer.get());
@@ -502,32 +510,68 @@ public class Robot extends TimedRobot {
         //Use Yellow Limelight Snapshot setting
         case kTask1:
           if (challengeTimer.get() == 0) {
-            route = y;
+            route = y; 
             challengeTimer.start();
           } 
 
-          if( route <= 0 ) { //blue config
+          if( route <= 0 ) { //blue config A
+            intakeOn = true;
+            autoIntake();
 
-            if(challengeTimer.get() < 2) { // following seconds are ~1 second(s) are shorter
+            if((int)challengeTimer.get() < 1) { // following seconds are ~1 second(s) are shorter
               navDrive = "Drive";
-            } else if(((int)challengeTimer.get()) == 2){
-              turnThing(180, 2);
-            } 
-            else if (challengeTimer.get() < 5) {//this if is broken, also check if turn progress bollean is ok
+            } else if((int)challengeTimer.get() > 1 && challengeTimer.get() < 3) {
+              navDrive = "null";
+            } else if(((int)challengeTimer.get()) == 3){
+              turnThing(20, 3);
+            } /*else if((int)challengeTimer.get() > 3 && challengeTimer.get() < 4) {
+              navDrive = "null";
+            }*/ else if (challengeTimer.get() < 5) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else if((int)challengeTimer.get() > 5 && challengeTimer.get() < 7) {
+              navDrive = "null";
+            } else if(((int)challengeTimer.get()) == 7){
+              turnThing(-68, 7);
+            }else if (challengeTimer.get() < 10) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else if((int)challengeTimer.get() > 10 && challengeTimer.get() < 13) {
+              navDrive = "null";
+            } else if(((int)challengeTimer.get()) == 13){
+              turnThing(0, 13);
+            } else if (challengeTimer.get() < 20) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else {
+              //challengeTimer.reset();
+            }
+
+            /*if(challengeTimer.get() < 5) { // following seconds are ~1 second(s) are shorter
               navDrive = "Drive";
             } else if(((int)challengeTimer.get()) == 5){
               turnThing(0, 5);
+            } 
+            else if (challengeTimer.get() < 8) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else if(((int)challengeTimer.get()) == 8){
+              turnThing(-71.57, 8);
+            }else if (challengeTimer.get() < 11) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else if(((int)challengeTimer.get()) == 11){
+              turnThing(63.4, 11);
+            } else if (challengeTimer.get() < 15) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Drive";
+            } else if(((int)challengeTimer.get()) == 15){
+              turnThing(0, 15);
             } else {
               challengeTimer.reset();
-            }
-
-
-            }
+            }*/
+          }
 
           
           
-           else  { //red config
-              //
+           else  { //red config A
+
+
+            
             }
 
 
@@ -557,6 +601,8 @@ public class Robot extends TimedRobot {
     table.getEntry("ledMode").setNumber(3);
 
     navDrive = "null";
+
+
 
 
   }
@@ -740,7 +786,8 @@ public class Robot extends TimedRobot {
         // intake.set(.7);
         conveyor.set(1);
       }
-      if (!gamePad0.getRawButton(6) || !gamePad0.getRawButton(5) || !(gamePad0.getPOV() == 270)) { // Not pressing these buttons
+      autoIntake();
+      /*if (!gamePad0.getRawButton(6) || !gamePad0.getRawButton(5) || !(gamePad0.getPOV() == 270)) { // Not pressing these buttons
         if (intakeOn && memBall < 2) {// auto intake
           intake.set(.6);
           if (Ball1) { // button 4 questionable, propose we do it autonomous
@@ -777,7 +824,7 @@ public class Robot extends TimedRobot {
           conveyor.stopMotor();
           conveyor.set(0);
         }
-    }
+    }*/
 
 
       if (gamePad0.getPOV() == 270) {
@@ -851,9 +898,10 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {
   }
 
-  public void turnThing(int angle, int time) {
+  public void turnThing(double angle, double time) {
+    System.out.println("turning");
     setAngle = angle;
-    if(((int)challengeTimer.get()) == time) { //move forward to first ball
+    if((int)challengeTimer.get() == time) { //move forward to first ball
       challengeTimer.stop();
       driveTrain.tankDrive(0, 0);
       if (Math.abs(angledYaw) <= 2) {
@@ -865,6 +913,71 @@ public class Robot extends TimedRobot {
         }
       }
   }
+  public void autoIntake() {
+    if (!gamePad0.getRawButton(6) || !gamePad0.getRawButton(5) || !(gamePad0.getPOV() == 270)) { // Not pressing these buttons
+      if (intakeOn && memBall < 2) {// auto intake
+        intake.set(.6);
+        if (Ball1) { // button 4 questionable, propose we do it autonomous
+          conveyor.set(1);
+          conveyTimer.stop();
+          conveyTimer.reset();
+        } else {
+          if (conveyTimer.get() == 0) { // when clock is zero, start it
+            conveyTimer.start();
+
+          }
+          if (conveyTimer.get() >= .34) { // when clock is over X stop conveyor
+            if (conveyor.get() != 0) {
+              conveyor.stopMotor();
+              memBall++;
+            }
+
+          }
+
+        }
 
 
+      } else if (intakeOn && memBall == 2 && !Ball1){
+        intake.set(.6);
+      } else if (memBall == 2 && Ball1 && Ball2) {
+        manualMode = true;
+      } else if (gamePad0.getPOV() == 270) {
+        intake.set(-.5);
+        conveyor.set(-.85);
+      } else if (!Ball1 && Ball3 && intakeOn) {// not shooting
+        intake.set(.65); // coolDown Turn off for testing
+      } else {// default
+        intake.stopMotor();
+        conveyor.stopMotor();
+        conveyor.set(0);
+      }
+  }
+
+}
+public void doUltraSonics() {
+  if (ultrasonic1.getRangeMM() != 0.0) {
+    if (ultrasonic1.getRangeMM() > 125) {
+      Ball1 = false;
+    } else {
+      Ball1 = true;
+    }
+  }
+  if (ultrasonic2.getRangeMM() != 0.0) {
+    if (ultrasonic2.getRangeMM() > 100) {
+      Ball2 = false;
+    } else {
+      Ball2 = true;
+    }
+  }
+  if (ultrasonic3.getRangeMM() != 0.0) {
+    if (ultrasonic3.getRangeMM() > 106) {
+      Ball3 = false;
+    } else {
+      Ball3 = true;
+    }
+  }
+  ultrasonic1.ping();
+  ultrasonic2.ping();
+  ultrasonic3.ping();
+}
 }
