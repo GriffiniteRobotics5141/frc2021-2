@@ -1,4 +1,5 @@
 
+
 /*----------------------------------------------------------------------------*/
 /* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
@@ -29,7 +30,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.wpilibj.Servo;
+//import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.networktables.NetworkTable;
@@ -39,10 +40,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.util.Color;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 //import com.revrobotics.ColorSensorV3;
 //import com.revrobotics.ColorMatchResult;
@@ -85,9 +82,6 @@ public class Robot extends TimedRobot {
   private static final String kComp = "Competition";
   private static final String kTask1 = "Task1";
 
-  public double leftStick;
-  public double rightStick;
-
   String Mode = "manual";// manual v. sensor
 
   Joystick gamePad0 = new Joystick(0);
@@ -118,8 +112,6 @@ public class Robot extends TimedRobot {
   Ultrasonic ultrasonic1 = new Ultrasonic(ultrasonicPing1, ultrasonicEcho1);
   Ultrasonic ultrasonic2 = new Ultrasonic(ultrasonicPing2, ultrasonicEcho2);
   Ultrasonic ultrasonic3 = new Ultrasonic(ultrasonicPing3, ultrasonicEcho3);
-  Servo simon = new Servo(2);
-
 
   AHRS navx;
 
@@ -127,7 +119,6 @@ public class Robot extends TimedRobot {
   Timer autonamousTimer = new Timer();
   Timer autoPeriod = new Timer();
   Timer conveyTimer = new Timer();
-  
 
   double h2 = 92; // height of target "inches"156+7=163
   double h1 = 33; // height of camera
@@ -334,7 +325,6 @@ public class Robot extends TimedRobot {
     }
 
     if (autoPilotState) {
-      simon.set(75/360);
       if (v == 1) {
         driveTrain.tankDrive(sineX + sineY, -(sineX) + sineY);
       }
@@ -454,7 +444,6 @@ public class Robot extends TimedRobot {
     ultrasonic2.setEnabled(true);
     ultrasonic3.setEnabled(true);
 
-
   }
 
   /**
@@ -511,8 +500,6 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("challengeTimer", challengeTimer.get());
     SmartDashboard.putNumber("route number", challengeTimer.get());
-
-    
   
       switch (m_challengeSelected) {
         case kComp:
@@ -528,7 +515,6 @@ public class Robot extends TimedRobot {
           } 
 
           if( route <= 0 ) { //blue config A
-            simon.setAngle(25);
             intakeOn = true;
             autoIntake();
 
@@ -555,7 +541,6 @@ public class Robot extends TimedRobot {
             } else if (challengeTimer.get() < 20) {//this if is broken, also check if turn progress bollean is ok
               navDrive = "Drive";
             } else {
-              navDrive = "null";
               //challengeTimer.reset();
             }
 
@@ -724,8 +709,36 @@ public class Robot extends TimedRobot {
       }
 
     }
+    /*
+     * if(ultrasonic1.getRangeMM()>0.1){range1 = ultrasonic1.getRangeMM();}
+     * if(ultrasonic2.getRangeMM()>0.1){range2 = ultrasonic2.getRangeMM();}
+     * if(ultrasonic3.getRangeMM()>0.1){range3 = ultrasonic1.getRangeMM();}
+     */
 
-    doUltraSonics();
+    if (ultrasonic1.getRangeMM() != 0.0) {
+      if (ultrasonic1.getRangeMM() > 125) {
+        Ball1 = false;
+      } else {
+        Ball1 = true;
+      }
+    }
+    if (ultrasonic2.getRangeMM() != 0.0) {
+      if (ultrasonic2.getRangeMM() > 100) {
+        Ball2 = false;
+      } else {
+        Ball2 = true;
+      }
+    }
+    if (ultrasonic3.getRangeMM() != 0.0) {
+      if (ultrasonic3.getRangeMM() > 106) {
+        Ball3 = false;
+      } else {
+        Ball3 = true;
+      }
+    }
+    ultrasonic1.ping();
+    ultrasonic2.ping();
+    ultrasonic3.ping();
 
     SmartDashboard.putNumber("WarmUP", warmUp.get());
     SmartDashboard.putNumber("mem ball", memBall);
@@ -735,7 +748,6 @@ public class Robot extends TimedRobot {
       intakeOn = false;
     }
     SmartDashboard.putBoolean("Manual", manualMode);
-    
 
     if (manualMode) {
 
@@ -770,7 +782,10 @@ public class Robot extends TimedRobot {
         shooter.set(ControlMode.PercentOutput, 0);
       }
 
-  
+      if (gamePad0.getRawButton(5)) {
+        // intake.set(.7);
+        conveyor.set(1);
+      }
       autoIntake();
       /*if (!gamePad0.getRawButton(6) || !gamePad0.getRawButton(5) || !(gamePad0.getPOV() == 270)) { // Not pressing these buttons
         if (intakeOn && memBall < 2) {// auto intake
@@ -939,7 +954,7 @@ public class Robot extends TimedRobot {
   }
 
 }
-protected void doUltraSonics() {
+public void doUltraSonics() {
   if (ultrasonic1.getRangeMM() != 0.0) {
     if (ultrasonic1.getRangeMM() > 125) {
       Ball1 = false;
@@ -965,19 +980,4 @@ protected void doUltraSonics() {
   ultrasonic2.ping();
   ultrasonic3.ping();
 }
-
-public void compoundDrive (int driveTime, int glideTime, int turnTime, double turnAngle){
-
-  if((int)challengeTimer.get() < driveTime) { // following seconds are ~1 second(s) are shorter
-    navDrive = "Drive";
-  } else if((int)challengeTimer.get() > driveTime && challengeTimer.get() < (driveTime + glideTime)) {
-    navDrive = "null";
-  } else if(((int)challengeTimer.get()) == turnTime){
-    turnThing(turnAngle, turnTime);
-  } 
-
-}
-
-
-
 }
