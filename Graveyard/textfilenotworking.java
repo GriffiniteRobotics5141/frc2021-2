@@ -106,7 +106,7 @@ public class Robot extends TimedRobot {
   VictorSP conveyor = new VictorSP(5);
   TalonFX shooter = new TalonFX(1);
   VictorSP intake = new VictorSP(4);
-  //VictorSP climb = new VictorSP(0);
+  VictorSP climb = new VictorSP(0);
   DigitalInput upperSwitch = new DigitalInput(6);
   DigitalInput lowerSwitch = new DigitalInput(7);
   DigitalOutput ultrasonicPing1 = new DigitalOutput(0);
@@ -118,7 +118,7 @@ public class Robot extends TimedRobot {
   Ultrasonic ultrasonic1 = new Ultrasonic(ultrasonicPing1, ultrasonicEcho1);
   Ultrasonic ultrasonic2 = new Ultrasonic(ultrasonicPing2, ultrasonicEcho2);
   Ultrasonic ultrasonic3 = new Ultrasonic(ultrasonicPing3, ultrasonicEcho3);
-  Servo simon = new Servo(0);
+  Servo simon = new Servo(10);
 
 
   AHRS navx;
@@ -158,11 +158,6 @@ public class Robot extends TimedRobot {
   String nextColor = "Purple Baby";
   String gameSadFace = "Mehh";
   boolean manualMode = true;
-
-  int ballPipeline = 0;
-  int tapePipeline = 1; //reflective
-  int conePipeline = 2;
-
 /*
   private final I2C.Port cPort = I2C.Port.kOnboard;
   private final ColorSensorV3 cSensor = new ColorSensorV3(cPort);
@@ -458,9 +453,6 @@ public class Robot extends TimedRobot {
     ultrasonic2.setEnabled(true);
     ultrasonic3.setEnabled(true);
 
-    simon.set(0.65); //set the camera to 22 deg
-
-
 
   }
 
@@ -532,7 +524,6 @@ public class Robot extends TimedRobot {
           if (challengeTimer.get() == 0) {
             route = y; 
             challengeTimer.start();
-            table.getEntry("pipeline").setNumber(ballPipeline);
           } 
 
           if( route <= 0 ) { //blue config A
@@ -624,7 +615,7 @@ public class Robot extends TimedRobot {
 
     navDrive = "null";
 
-    simon.set(0); //set the camera to -22 deg
+
 
 
   }
@@ -634,6 +625,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+
+simon.setAngle(180*gamePad0.getRawAxis(axis));
 
     m_controlSelected = m_control.getSelected();
 
@@ -829,13 +822,13 @@ public class Robot extends TimedRobot {
     SmartDashboard.putBoolean("Upperswitch", upperSwitch.get());
     SmartDashboard.putBoolean("Lowerswitch", lowerSwitch.get());
 
-    /*if (gamePad0.getPOV() == 0 && upperSwitch.get()) {
+    if (gamePad0.getPOV() == 0 && upperSwitch.get()) {
       climb.set(.7);
     } else if (gamePad0.getPOV() == 180 && lowerSwitch.get()) {
       climb.set(-.7);
     } else {// default
       climb.set(0);
-    }*/
+    }
 
     if (!autoPilotState) {
       SmartDashboard.putNumber("leftStick", gamePad0.getRawAxis(1));
@@ -983,6 +976,25 @@ public void compoundDrive (int driveTime, int glideTime, int turnTime, double tu
   } else if(((int)challengeTimer.get()) == turnTime){
     turnThing(turnAngle, turnTime);
   } 
+
+}
+public void recordInputs(double left, double right) {
+  File file = new File("inputs.txt");
+  if(file.exists()){
+    String leftStickString = "" + left;
+    String rightStickString = "" + right;
+    try {
+      FileWriter fileWriter = new FileWriter("inputs.txt");
+      fileWriter.write(leftStickString + "\n");
+      fileWriter.write(rightStickString + "\n");
+      fileWriter.flush();
+      fileWriter.close();
+    } catch(IOException e) {
+      System.out.println(e);
+    }
+  } else {
+    System.out.println("Error: No \"inputs.txt\" file in src/main/java/frc/robot");
+  }
 
 }
 
