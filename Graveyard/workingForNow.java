@@ -84,7 +84,6 @@ public class Robot extends TimedRobot {
 
   private static final String kComp = "Competition";
   private static final String kTask1 = "Task1";
-  private static final String ktest = "TestOption";
 
   public double leftStick;
   public double rightStick;
@@ -231,7 +230,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Game Mode", m_challange);
     m_challange.setDefaultOption("Competition", kComp);
     m_challange.addOption("Task1", kTask1);
-    m_challange.addOption("test", ktest);
+
 
     navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50);
     // (byte)50);
@@ -633,10 +632,6 @@ public class Robot extends TimedRobot {
 
 
           break;
-
-        case ktest:
-          break;
-
         default:
           break;
     }
