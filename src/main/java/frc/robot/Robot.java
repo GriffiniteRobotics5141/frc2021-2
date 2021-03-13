@@ -185,6 +185,9 @@ public class Robot extends TimedRobot {
   double a;
   double v;
 
+  double sineX;
+  double sineY;
+
   int seenColor;
 
   double range1;
@@ -319,16 +322,16 @@ public class Robot extends TimedRobot {
     // double ratioY = (1.81-y)/20; // was y/20 Based of angle target is seen at
     double ratioY = (disXnum - marginXerror) / 25; // Based of distance of target from dsXnum 108, 35
     double ratioA = (2.68 - a);// changed <--- thank you very cool 1/25
-    double minCorrectX = .25;
+    double minCorrectX = .29;
     double maxCorrectX = .6;
     double minCorrectY = .1;
     double maxCorrectY = .4;
 
     // double sineWithSignum =
     // Math.signum(ratioX)*(1-min)*Math.sin(ratioX*Math.PI/2)+(1+min)/2;
-    double sineX = Math.signum(ratioX) * ((maxCorrectX - minCorrectX) / 2) * Math.sin(Math.PI * (ratioX - .5))
+    sineX = Math.signum(ratioX) * ((maxCorrectX - minCorrectX) / 2) * Math.sin(Math.PI * (ratioX - .5))
         + Math.signum(ratioX) * ((maxCorrectX + minCorrectX) / 2);
-    double sineY = Math.signum(ratioY) * ((maxCorrectY - minCorrectY) / 2) * Math.sin(Math.PI * (ratioY - .5))
+    sineY = Math.signum(ratioY) * ((maxCorrectY - minCorrectY) / 2) * Math.sin(Math.PI * (ratioY - .5))
         + Math.signum(ratioY) * ((maxCorrectY + minCorrectY) / 2);
 
     SmartDashboard.putNumber("SineX", sineX);
@@ -635,6 +638,20 @@ public class Robot extends TimedRobot {
           break;
 
         case ktest:
+        if (challengeTimer.get() == 0) {
+          routeY = 0; //y
+          routeX = 0; //x
+          routeMargin = .5;
+          challengeTimer.start();
+          table.getEntry("pipeline").setNumber(ballPipeline);
+
+        } 
+
+        limeTurn(90, 1);
+        if ((int)challengeTimer.get() > 1)navDrive = "Drive";
+
+
+
           break;
 
         default:
@@ -945,6 +962,33 @@ public class Robot extends TimedRobot {
         }
       }
   }
+
+
+  public void limeTurn(double angle, double time) {
+    
+    if(!(Math.abs(x) <= .7 && v == 1)){
+    setAngle = angle;
+      }
+
+    if((int)challengeTimer.get() == time) { //move forward to first ball
+      challengeTimer.stop();
+      driveTrain.tankDrive(0, 0);
+      if (Math.abs(angledYaw) <= 15) {
+        navDrive = "null";
+        driveTrain.tankDrive(sineX,-(sineX));
+        if(Math.abs(x) <= .7 && v == 1){
+          challengeTimer.start();
+          //setAngle = yaw;
+        }
+      } else {
+        navDrive = "Turn";
+        challengeTimer.stop();
+        }
+      
+    }
+  }
+
+
   public void autoIntake() {
     if (!gamePad0.getRawButton(6) || !gamePad0.getRawButton(5) || !(gamePad0.getPOV() == 270)) { // Not pressing these buttons
       if (intakeOn && memBall < 2) {// auto intake
