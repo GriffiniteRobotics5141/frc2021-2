@@ -188,6 +188,8 @@ public class Robot extends TimedRobot {
   double sineX;
   double sineY;
 
+  double ratioX;
+
   int seenColor;
 
   double range1;
@@ -318,11 +320,11 @@ public class Robot extends TimedRobot {
     v = tv.getDouble(0.0);
 
     double marginXerror = 172;// 168
-    double ratioX = x / 27; // was (x-6)/27 on 3/9
+    ratioX = x / 27; // was (x-6)/27 on 3/9
     // double ratioY = (1.81-y)/20; // was y/20 Based of angle target is seen at
     double ratioY = (disXnum - marginXerror) / 25; // Based of distance of target from dsXnum 108, 35
     double ratioA = (2.68 - a);// changed <--- thank you very cool 1/25
-    double minCorrectX = .29;
+    double minCorrectX = .29; //.29
     double maxCorrectX = .6;
     double minCorrectY = .1;
     double maxCorrectY = .4;
@@ -647,9 +649,38 @@ public class Robot extends TimedRobot {
 
         } 
 
-        limeTurn(90, 1);
-        if ((int)challengeTimer.get() > 1)navDrive = "Drive";
+        //limeTurn(90, 1);
+        /*turnThing(90, 0);
+        if ((int)challengeTimer.get() > 1) {
+          limeDrive();
+        }*/
+        limeDrive();
 
+        if(((int)challengeTimer.get()) <= 1){
+          turnThing(-25, 1);
+        } else if(challengeTimer.get() < 3) { // following seconds are ~1 second(s) are shorter
+          navDrive = "Drive";
+        } else if((int)challengeTimer.get() > 3 && challengeTimer.get() < 5) {
+          navDrive = "null";
+        } else if(((int)challengeTimer.get()) == 5){
+          turnThing(36, 5);
+        } else if (challengeTimer.get() <= 7.35) {//this if is broken, also check if turn progress bollean is ok
+          navDrive = "Drive";
+        } else if((int)challengeTimer.get() > 8 && challengeTimer.get() < 10) {
+          navDrive = "null";
+        } else if(((int)challengeTimer.get()) == 10){
+          turnThing(-38, 10);
+        }else if (challengeTimer.get() < 13) {//this if is broken, also check if turn progress bollean is ok
+          navDrive = "Drive";
+        } else if((int)challengeTimer.get() > 13 && challengeTimer.get() < 15) {
+          navDrive = "null";
+        } else if(((int)challengeTimer.get()) == 15){
+          turnThing(0, 15);
+        } else if (challengeTimer.get() < 20) {//this if is broken, also check if turn progress bollean is ok
+          navDrive = "Drive";
+        } else {
+          navDrive = "null";
+        }
 
 
           break;
@@ -987,6 +1018,32 @@ public class Robot extends TimedRobot {
       
     }
   }
+
+
+  public void limeDrive() {
+    if (v == 1) {
+
+      challengeTimer.start();
+
+    double minLimeX = .44;
+    double maxLimeX = 1;
+
+
+    // double sineWithSignum =
+    // Math.signum(ratioX)*(1-min)*Math.sin(ratioX*Math.PI/2)+(1+min)/2;
+    double limeX = Math.signum(ratioX) * ((maxLimeX - minLimeX) / 2) * Math.sin(Math.PI * (ratioX - .5)) + Math.signum(ratioX) * ((maxLimeX + minLimeX) / 2);
+
+        double cCorLime = (-limeX > 0) ? -limeX : minLimeX;
+        double ccCorLime  = (limeX > 0) ? limeX : minLimeX;
+
+        driveTrain.tankDrive(1-cCorLime,1-ccCorLime); 
+    } else {
+
+      challengeTimer.stop();
+
+    }    
+  }
+
 
 
   public void autoIntake() {
