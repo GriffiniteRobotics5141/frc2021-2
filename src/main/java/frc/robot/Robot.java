@@ -608,8 +608,69 @@ public class Robot extends TimedRobot {
             
           }
 
-          
 
+          // Path Blue A
+          if(Math.abs(routeX - (20) ) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
+            challengeTimer.start();
+            intakeOn = true;
+            autoIntake();
+
+            if((challengeTimer.get()) <= 3.3){
+              limeDrive(.58, -3);
+            } else if((challengeTimer.get()) < 5){
+              navDrive = "Null";
+            } else if(((int)challengeTimer.get()) == 5){
+                limeTurn(-66, 5);
+            } else if((challengeTimer.get()) < 7.8){
+                limeDrive(.58, -4);
+            } else if((challengeTimer.get()) < 10){
+                navDrive = "Null";
+            } else if(((int)challengeTimer.get()) == 10){
+              limeTurn(20, 10);
+            } else if((challengeTimer.get()) <= 11.7){
+              limeDrive(.62, -4);
+            } else if((challengeTimer.get()) <= 13){
+              navDrive = "Null";
+            } else if(((int)challengeTimer.get()) == 13){
+              turnThing(0, 11);
+            } else if (challengeTimer.get() < 15) {//this if is broken, also check if turn progress bollean is ok
+              setAngle = 0;
+              navDrive = "Drive";
+            } else { navDrive = "Null"; }
+
+          }
+
+          //Path Blue B
+          if(Math.abs(routeX - (9) ) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
+            challengeTimer.start();
+            intakeOn = true;
+            autoIntake();
+  
+            if((challengeTimer.get()) <= 2.75){
+              limeDrive(.60, -2);
+            } else if((challengeTimer.get()) < 5){
+              navDrive = "Null";
+            } else if(((int)challengeTimer.get()) == 5){
+              limeTurn(-38, 5);
+            } else if((challengeTimer.get()) <= 7){
+              limeDrive(.62, -2);
+            } else if (challengeTimer.get() < 9){
+              navDrive = "Null";
+            } else if(((int)challengeTimer.get()) == 9){
+              limeTurn(36, 9);
+            } else if((challengeTimer.get()) <= 10.75){
+              limeDrive(.62, -2);
+            } else if (challengeTimer.get() < 12) {//this if is broken, also check if turn progress bollean is ok
+              navDrive = "Null";
+            } else if(((int)challengeTimer.get()) == 12){
+              turnThing(0, 11);
+            } else if (challengeTimer.get() < 15) {//this if is broken, also check if turn progress bollean is ok
+              setAngle = 0;
+              navDrive = "Drive";
+            } else { navDrive = "Null"; }
+            
+  
+          }
 
           break;
 
@@ -626,32 +687,10 @@ public class Robot extends TimedRobot {
           challengeTimer.start();
           intakeOn = true;
           autoIntake();
-
-          if((challengeTimer.get()) <= .8){
-            limeDrive(.6, -4);
-          } else if(((int)challengeTimer.get()) <= 2){
-            navDrive = "Null";
-          } else if(((int)challengeTimer.get()) <= 3){
-            limeTurn(35, 3);
-          } else if((challengeTimer.get()) <= 4.8){
-            limeDrive(.62, -4);
-          } else if((challengeTimer.get()) <= 6.5){
-            navDrive = "Null";
-          } else if(((int)challengeTimer.get()) <= 7){
-            limeTurn(-66, 7);
-          } else if(((int)challengeTimer.get()) <= 9){
-            limeDrive(.58, -4);
-          } else if((challengeTimer.get()) < 10){
-            navDrive = "Null";
-          } else if(((int)challengeTimer.get()) == 10){
-            turnThing(0, 11);
-          } else if((challengeTimer.get()) <= 15){
-            setAngle = 0;
-            navDrive = "Drive";
-          } else { navDrive = "Null"; }
-          
-
         }
+
+
+        
           break;
 
         default:
