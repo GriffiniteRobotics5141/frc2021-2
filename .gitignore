@@ -157,5 +157,11 @@ gradle-app.setting
 bin/
 imgui.ini
 
+### Vendor Deps ###
+vendordeps\navx_frc.json
+vendordeps\Phoenix.json
+vendordeps\REVColorSensorV3.json
+vendordeps\WPILibNewCommands.json
+vendordeps\WPILibOldCommands.json
 
 # End of https://www.gitignore.io/api/c++,java,linux,macos,gradle,windows,visualstudiocode

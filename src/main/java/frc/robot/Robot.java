@@ -175,7 +175,7 @@ public class Robot extends TimedRobot {
 */
   double yaw;
 
-  // NetworkTable table;
+  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx;
   NetworkTableEntry ty;
   NetworkTableEntry ta;
@@ -199,7 +199,7 @@ public class Robot extends TimedRobot {
   int memBall;
 
   Timer warmUp = new Timer();
-  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  
 
   String navDrive = "null";
   double setAngle = 0;
@@ -239,7 +239,7 @@ public class Robot extends TimedRobot {
     m_challange.addOption("test", ktest);
 
     navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50);
-    // (byte)50);
+
     right0.setInverted(true);
     right1.setInverted(true);
     colMotor.setInverted(true);
@@ -257,8 +257,8 @@ public class Robot extends TimedRobot {
     autonamousTimer.stop();
     autoPeriod.reset();
     autoPeriod.stop();
-    // navx.reset();
-    // navx.zeroYaw();
+    navx.reset();
+    navx.zeroYaw();
     colMotor.set(0);
     rotatenum = 0;
     seenColor = 0;
@@ -306,7 +306,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Confidence", match.confidence);
     SmartDashboard.putString("Detected Color", colorString);
 */
-  double yaw = navx.getYaw();
+    yaw = navx.getYaw();
 
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry tx = table.getEntry("tx");
@@ -314,8 +314,8 @@ public class Robot extends TimedRobot {
     NetworkTableEntry ta = table.getEntry("ta");
     NetworkTableEntry tv = table.getEntry("tv");
 
-    x = (tx.getDouble(0.0)); // x & y is negative because limelight is upsidedown
-    y = (ty.getDouble(0.0));
+    x = tx.getDouble(0.0); // x & y is negative because limelight is upsidedown
+    y = ty.getDouble(0.0);
     a = ta.getDouble(0.0);
     v = tv.getDouble(0.0);
 
@@ -372,7 +372,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("LimelightA", a);
     SmartDashboard.putNumber("ratioX", ratioX);
     SmartDashboard.putNumber("D-Pad", gamePad0.getPOV());
-    // SmartDashboard.putNumber("Yaw",navx.getYaw());
+    SmartDashboard.putNumber("Yaw",navx.getYaw());
     // SmartDashboard.putNumber("NavxStep",navxStep);
 
     SmartDashboard.putBoolean("Auto", doAutoPilotNow);
@@ -1009,7 +1009,7 @@ public class Robot extends TimedRobot {
         driveTrain.tankDrive(sineX,-(sineX));
         if(Math.abs(x) <= .7 && v == 1){
           challengeTimer.start();
-          //setAngle = yaw;
+          setAngle = yaw;
         }
       } else {
         navDrive = "Turn";
