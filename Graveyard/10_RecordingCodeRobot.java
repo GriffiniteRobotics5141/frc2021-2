@@ -337,10 +337,10 @@ public class Robot extends TimedRobot {
     // double ratioY = (1.81-y)/20; // was y/20 Based of angle target is seen at
     ratioY = (disXnum - marginXerror) / 25; // Based of distance of target from dsXnum 108, 35
     ratioA = (2.68 - a);// changed <--- thank you very cool 1/25
-    minCorrectX = .29; //.29
-    maxCorrectX = .6;
-    minCorrectY = .1;
-    maxCorrectY = .4;
+    minCorrectX = 0; //.29
+    maxCorrectX = 0;
+    minCorrectY = 0;
+    maxCorrectY = 0;
 
     // double sineWithSignum =
     // Math.signum(ratioX)*(1-min)*Math.sin(ratioX*Math.PI/2)+(1+min)/2;
@@ -361,7 +361,7 @@ public class Robot extends TimedRobot {
 
     if (autoPilotState) {
       if (v == 1) {
-        driveTrain.tankDrive(sineX+(sineY), -(sineX)+(sineY));
+        driveTrain.tankDrive(sineX, -(sineX));
       }
       if (x > -1 && x < 1 && disXnum > (marginXerror - 1.5) && disXnum < (marginXerror + 1.5)) {
         if (autoPilotTimer.get() == 0) {
