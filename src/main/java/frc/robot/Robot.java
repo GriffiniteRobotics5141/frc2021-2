@@ -194,7 +194,7 @@ public class Robot extends TimedRobot {
   double minCorrectY; 
   double maxCorrectY;
 
-  double marginXerror;
+  double setDistance;
 
   double ratioY;
   double ratioA;
@@ -332,15 +332,15 @@ public class Robot extends TimedRobot {
     a = ta.getDouble(0.0);
     v = tv.getDouble(0.0);
 
-    marginXerror = 172;// 168
-    ratioX = x / 27; // was (x-6)/27 on 3/9
+    setDistance = 172;// 168
+    ratioX = (Math.abs(x) < 27)? x/27 : 1*Math.signum(x); // was (x-6)/27 on 3/9
     // double ratioY = (1.81-y)/20; // was y/20 Based of angle target is seen at
-    ratioY = (disXnum - marginXerror) / 25; // Based of distance of target from dsXnum 108, 35
+    ratioY = (Math.abs(disXnum - setDistance) < 25)? (disXnum - setDistance) / 25 : 1*Math.signum(disXnum - setDistance); // Based of distance of target from dsXnum 108, 35
     ratioA = (2.68 - a);// changed <--- thank you very cool 1/25
-    minCorrectX = .29; //.29
+    minCorrectX = .0; //.29
     maxCorrectX = .6;
-    minCorrectY = .1;
-    maxCorrectY = .4;
+    minCorrectY = .0;
+    maxCorrectY = .7;
 
     // double sineWithSignum =
     // Math.signum(ratioX)*(1-min)*Math.sin(ratioX*Math.PI/2)+(1+min)/2;
@@ -363,7 +363,7 @@ public class Robot extends TimedRobot {
       if (v == 1) {
         driveTrain.tankDrive(sineX+(sineY), -(sineX)+(sineY));
       }
-      if (x > -1 && x < 1 && disXnum > (marginXerror - 1.5) && disXnum < (marginXerror + 1.5)) {
+      if (Math.abs(x) <= 1.5 && Math.abs(disXnum - setDistance) <= 1.5) {
         if (autoPilotTimer.get() == 0) {
           autoPilotTimer.start();
         } // autoPilotTimer stops prolonged aim jitter
@@ -686,32 +686,13 @@ public class Robot extends TimedRobot {
           break;
 
         case kTest:
-        if (challengeTimer.get() == 0) {
-          routeY = 0; //y
-          routeX = 0; //x
-          routeMargin = .5;
-          table.getEntry("pipeline").setNumber(ballPipeline);
-
-        } 
-
-        if(true) {
-          challengeTimer.start();
-          intakeOn = true;
-          autoIntake();
-        }
-
-
+        
         
           break;
 
           case kFun:
 
-          //simon.set(.325);
-        if(true) {
-          simon.set(.325);
-          limeDrive(.42, -2);
-        }
-
+        
 
         
           break;
@@ -742,7 +723,7 @@ public class Robot extends TimedRobot {
 
     navDrive = "null";
 
-    simon.set(0); //set the camera to -22 deg
+    simon.set(0); //set the camera to 22 deg
 
 
   }
@@ -860,6 +841,18 @@ public class Robot extends TimedRobot {
       intakeOn = false;
     }
     SmartDashboard.putBoolean("Manual", manualMode);
+
+    //diffrent distances
+    if (gamePad0.getRawButton(6) && gamePad0.getRawButton(1)) {
+      shooter.set(ControlMode.PercentOutput, 0.6);
+    } else if (gamePad0.getRawButton(6) && gamePad0.getRawButton(2)) {
+      shooter.set(ControlMode.PercentOutput, 0.75);
+    } else if (gamePad0.getRawButton(6) && gamePad0.getRawButton(3)) {
+      shooter.set(ControlMode.PercentOutput, 9);
+    } else {
+      shooter.set(ControlMode.PercentOutput, 0);
+    }
+
     
 
     if (manualMode) {
@@ -879,10 +872,10 @@ public class Robot extends TimedRobot {
       
 
       if (gamePad0.getRawButton(6)) {
-        shooter.set(ControlMode.PercentOutput, 0.8);
+        //shooter.set(ControlMode.PercentOutput, 0.8);
         memBall = 0;
       } else {
-        shooter.set(ControlMode.PercentOutput, 0);
+        //shooter.set(ControlMode.PercentOutput, 0);
       }
     } else { //autoMode
 
@@ -893,9 +886,9 @@ public class Robot extends TimedRobot {
       }
 
       if (gamePad0.getRawButton(6)) {// shooter Righth bumper
-        shooter.set(ControlMode.PercentOutput, 0.8/* veloFwoosh*velocityToMotorRatio */);// shooter value depending on target distance x and y
+        //shooter.set(ControlMode.PercentOutput, 0.8/* veloFwoosh*velocityToMotorRatio */);// shooter value depending on target distance x and y
       } else {
-        shooter.set(ControlMode.PercentOutput, 0);
+        //shooter.set(ControlMode.PercentOutput, 0);
       }
 
 
@@ -938,9 +931,9 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putBoolean("autopilot", autoPilotState);
 
-    if (gamePad0.getRawButtonPressed(1)) {
-      doAutoPilotNow = !doAutoPilotNow;
-    }
+    if (gamePad0.getPOV() == 180) {
+      doAutoPilotNow = true;
+    } else { doAutoPilotNow = false; }
     if (gamePad0.getRawButtonPressed(6) || gamePad0.getRawButtonPressed(10) || Math.abs(gamePad0.getRawAxis(1)) >= .2
         || Math.abs(gamePad0.getRawAxis(5)) >= .2) { // a button
       autoPilotState = false;
@@ -1118,124 +1111,5 @@ public void compoundDrive (int driveTime, int glideTime, int turnTime, double tu
 }
 
 
-
 }
 
-//History Stuff
-
-//~~red B v.1.
-            /*
-            if(((int)challengeTimer.get()) <= 1){
-              turnThing(-25, 1);
-            } else if(challengeTimer.get() < 3) { // following seconds are ~1 second(s) are shorter
-              navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 3 && challengeTimer.get() < 5) {
-              navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 5){
-              turnThing(36, 5);
-            } else if (challengeTimer.get() <= 7.35) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 8 && challengeTimer.get() < 10) {
-              navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 10){
-              turnThing(-38, 10);
-            }else if (challengeTimer.get() < 13) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 13 && challengeTimer.get() < 15) {
-              navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 15){
-              turnThing(0, 15);
-            } else if (challengeTimer.get() < 20) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else {
-              navDrive = "null";
-            }
-
-            //~~red A v.1.
-            if((int)challengeTimer.get() < 1) { // following seconds are ~1 second(s) are shorter
-              navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 1 && challengeTimer.get() < 3) {
-              navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 3){
-              turnThing(20, 3);
-            } else if((int)challengeTimer.get() > 3 && challengeTimer.get() < 4) {
-              navDrive = "null";
-            } else if (challengeTimer.get() < 5) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 5 && challengeTimer.get() < 7) {
-              navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 7){
-              turnThing(-68, 7);
-            }else if (challengeTimer.get() < 10) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 10 && challengeTimer.get() < 13) {
-              navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 13){
-              turnThing(0, 13);
-            } else if (challengeTimer.get() < 20) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else {
-              navDrive = "null";
-              //challengeTimer.reset();
-            }*/
-
-            /*if(challengeTimer.get() < 5) { // following seconds are ~1 second(s) are shorter
-              navDrive = "Drive";
-            } else if(((int)challengeTimer.get()) == 5){
-              turnThing(0, 5);
-            } 
-            else if (challengeTimer.get() < 8) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if(((int)challengeTimer.get()) == 8){
-              turnThing(-71.57, 8);
-            }else if (challengeTimer.get() < 11) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if(((int)challengeTimer.get()) == 11){
-              turnThing(63.4, 11);
-            } else if (challengeTimer.get() < 15) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if(((int)challengeTimer.get()) == 15){
-              turnThing(0, 15);
-            } else {
-              challengeTimer.reset();
-            }*/
-
-            //~~Old Auto Intake
-                /*if (!gamePad0.getRawButton(6) || !gamePad0.getRawButton(5) || !(gamePad0.getPOV() == 270)) { // Not pressing these buttons
-        if (intakeOn && memBall < 2) {// auto intake
-          intake.set(.6);
-          if (Ball1) { // button 4 questionable, propose we do it autonomous
-            conveyor.set(1);
-            conveyTimer.stop();
-            conveyTimer.reset();
-          } else {
-            if (conveyTimer.get() == 0) { // when clock is zero, start it
-              conveyTimer.start();
-
-            }
-            if (conveyTimer.get() >= .34) { // when clock is over X stop conveyor
-              if (conveyor.get() != 0) {
-                conveyor.stopMotor();
-                memBall++;
-              }
-
-            }
-
-          }
-
-
-        } else if (intakeOn && memBall == 2 && !Ball1){
-          intake.set(.6);
-        } else if (memBall == 2 && Ball1 && Ball2) {
-          manualMode = true;
-        } else if (gamePad0.getPOV() == 270) {
-          intake.set(-.5);
-          conveyor.set(-.85);
-        } else if (!Ball1 && Ball3 && intakeOn) {// not shooting
-          intake.set(.65); // coolDown Turn off for testing
-        } else {// default
-          intake.stopMotor();
-          conveyor.stopMotor();
-          conveyor.set(0);
-        }
-    }*/
