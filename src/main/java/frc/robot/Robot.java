@@ -149,6 +149,10 @@ public class Robot extends TimedRobot {
   String nextColor = "Purple Baby";
   String gameSadFace = "Mehh";
   boolean manualMode = true;
+
+  int tapePipeline = 0;
+  int ballPipeline = 1;
+  int conePipeline = 2;
 /*
   private final I2C.Port cPort = I2C.Port.kOnboard;
   private final ColorSensorV3 cSensor = new ColorSensorV3(cPort);
@@ -160,7 +164,7 @@ public class Robot extends TimedRobot {
 */
   double yaw;
 
-  // NetworkTable table;
+  NetworkTable table;
   NetworkTableEntry tx;
   NetworkTableEntry ty;
   NetworkTableEntry ta;
@@ -179,7 +183,6 @@ public class Robot extends TimedRobot {
   int memBall;
 
   Timer warmUp = new Timer();
-  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
 
   String navDrive = "null";
   double setAngle = 0;
@@ -207,13 +210,16 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("Right", kRight);
     m_chooser.setDefaultOption("Off", kOff);
 
-    SmartDashboard.putData("Control Mode", m_control);
+    SmartDashboard.putData("Control Mode", m_control); //Conveyor
     m_control.setDefaultOption("Manual", kManual);
     m_control.addOption("Sensor", kSensor);
 
     SmartDashboard.putData("Game Mode", m_challange);
     m_challange.setDefaultOption("Competition", kComp);
     m_challange.addOption("Task1", kTask1);
+    m_challenge.addOption("Task2", kTask2);
+    m_challenge.addOption("Task3", kTask3);
+    m_challenge.addOption("Task4", kTask4);
 
 
     navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50);
@@ -223,12 +229,7 @@ public class Robot extends TimedRobot {
     colMotor.setInverted(true);
     conveyor.setInverted(true);
     CameraServer.getInstance().startAutomaticCapture();
-/*
-    m_colorMatcher.addColorMatch(BlueTarget);
-    m_colorMatcher.addColorMatch(GreenTarget);
-    m_colorMatcher.addColorMatch(RedTarget);
-    m_colorMatcher.addColorMatch(YellowTarget);
-*/
+
     autoPilotTimer.reset();
     autoPilotTimer.stop();
     autonamousTimer.reset();
@@ -241,8 +242,8 @@ public class Robot extends TimedRobot {
     rotatenum = 0;
     seenColor = 0;
     warmUp.reset();
-    /* var yes = */table.getEntry("ledMode").setNumber(3);
-    /* System.out.println("asd:" + yes); */
+
+    table.getEntry("ledMode").setNumber(3);
     memBall = 0;
   }
 
@@ -257,45 +258,19 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    /*
-    int proximity = cSensor.getProximity();
-    Color detectedColor = cSensor.getColor();
-    ColorMatchResult match = m_colorMatcher.matchClosestColor(detectedColor);
-    gameData = DriverStation.getInstance().getGameSpecificMessage();
 
-    if (match.color == BlueTarget) {
-      colorString = "B";
-    } else if (match.color == RedTarget) {
-      colorString = "R";
-    } else if (match.color == GreenTarget) {
-      colorString = "G";
-    } else if (match.color == YellowTarget) {
-      colorString = "Y";
-    } else {
-      colorString = "Unknown";
-    }
+    yaw = navx.getYaw();
 
-    double IR = cSensor.getIR();
-    SmartDashboard.putNumber("Red", detectedColor.red);
-    SmartDashboard.putNumber("Green", detectedColor.green);
-    SmartDashboard.putNumber("Blue", detectedColor.blue);
-    SmartDashboard.putNumber("IR", IR);
-    SmartDashboard.putNumber("Proximity", proximity);
-    SmartDashboard.putNumber("Confidence", match.confidence);
-    SmartDashboard.putString("Detected Color", colorString);
-*/
-  double yaw = navx.getYaw();
+    table = NetworkTableInstance.getDefault().getTable("limelight");
+    tx = table.getEntry("tx");
+    ty = table.getEntry("ty");
+    ta = table.getEntry("ta");
+    tv = table.getEntry("tv");
 
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-    NetworkTableEntry tx = table.getEntry("tx");
-    NetworkTableEntry ty = table.getEntry("ty");
-    NetworkTableEntry ta = table.getEntry("ta");
-    NetworkTableEntry tv = table.getEntry("tv");
-
-    double x = (tx.getDouble(0.0)); // x & y is negative because limelight is upsidedown
-    double y = (ty.getDouble(0.0));
-    double a = ta.getDouble(0.0);
-    double v = tv.getDouble(0.0);
+    x = (tx.getDouble(0.0)); // x & y is negative because limelight is upsidedown
+    y = (ty.getDouble(0.0));
+    a = ta.getDouble(0.0);
+    v = tv.getDouble(0.0);
 
     double marginXerror = 172;// 168
     double ratioX = x / 27; // was (x-6)/27 on 3/9
@@ -384,11 +359,7 @@ public class Robot extends TimedRobot {
     
   if(navDrive.length() > 0) {
     switch (navDrive.charAt(0)) {
-      default :
-      minCorrectNavX = .34;
-      maxCorrectNavX = .65;
-      AOC = 85;
-      break;
+      
       case 'T' :
         minCorrectNavX = .34; //.34
         maxCorrectNavX = .5;
@@ -407,7 +378,12 @@ public class Robot extends TimedRobot {
         driveTrain.tankDrive(cCorrection,ccCorrection); 
     
         break;
-  }
+      default :
+        minCorrectNavX = .34;
+        maxCorrectNavX = .65;
+        AOC = 85;
+        break;
+    }
   }
 
 
@@ -415,7 +391,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    // teleopInit();
     m_autoSelected = m_chooser.getSelected();
     m_challengeSelected = m_challange.getSelected();
 
@@ -425,7 +400,6 @@ public class Robot extends TimedRobot {
     autoPeriod.stop();
     table.getEntry("ledMode").setNumber(3);
 
-    table.getEntry("ledMode").setNumber(3);
 
     navx.zeroYaw();
     navx.reset();
@@ -452,11 +426,6 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     doUltraSonics();
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-    NetworkTableEntry tx = table.getEntry("tx");
-    NetworkTableEntry ty = table.getEntry("ty");
-    NetworkTableEntry ta = table.getEntry("ta");
-    NetworkTableEntry tv = table.getEntry("tv");
 
     /*switch (m_autoSelected) {
     case kLeft:
@@ -510,37 +479,37 @@ public class Robot extends TimedRobot {
         //Use Yellow Limelight Snapshot setting
         case kTask1:
           if (challengeTimer.get() == 0) {
-            route = y; 
+            route = y;
             challengeTimer.start();
+            table.getEntry("pipeline").setNumber(ballPipeline);
           } 
 
           if( route <= 0 ) { //blue config A
             intakeOn = true;
             autoIntake();
 
-            if((int)challengeTimer.get() < 1) { // following seconds are ~1 second(s) are shorter
+            if ( challengeTimer.get() <= 1.0) { // following seconds are ~1 second(s) are shorter
               navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 1 && challengeTimer.get() < 3) {
+            } else if ( challengeTimer.get() <= 3) {
               navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 3){
-              turnThing(20, 3);
-            } /*else if((int)challengeTimer.get() > 3 && challengeTimer.get() < 4) {
-              navDrive = "null";
-            }*/ else if (challengeTimer.get() < 5) {//this if is broken, also check if turn progress bollean is ok
+            } else if ( challengeTimer.get() <= 4) {
+              turnThing(20, 4);
+            } else if ( challengeTimer.get() <= 5) {//this if is broken, also check if turn progress bollean is ok
               navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 5 && challengeTimer.get() < 7) {
+            } else if ( challengeTimer.get() <= 7) {
               navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 7){
-              turnThing(-68, 7);
-            }else if (challengeTimer.get() < 10) {//this if is broken, also check if turn progress bollean is ok
+            } else if ( challengeTimer.get() <= 8){
+              turnThing(-68, 8);
+            } else if ( challengeTimer.get() <= 10) {//this if is broken, also check if turn progress bollean is ok
               navDrive = "Drive";
-            } else if((int)challengeTimer.get() > 10 && challengeTimer.get() < 13) {
+            } else if ( challengeTimer.get() <= 13) {
               navDrive = "null";
-            } else if(((int)challengeTimer.get()) == 13){
-              turnThing(0, 13);
-            } else if (challengeTimer.get() < 20) {//this if is broken, also check if turn progress bollean is ok
+            } else if ( challengeTimer.get() <= 14){
+              turnThing(0, 14);
+            } else if ( challengeTimer.get() <= 20) {//this if is broken, also check if turn progress bollean is ok
               navDrive = "Drive";
             } else {
+              route = -1;
               //challengeTimer.reset();
             }
 
@@ -629,86 +598,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putBoolean("ultrasonic3", Ball3);
 
     SmartDashboard.putBoolean("Intake Test", test);
-/*
-    if (gameData.length() > 0) {
-      switch (gameData.charAt(0)) {
-      case 'B':
-        gameSadFace = "R";
-        break;
-      case 'G':
-        gameSadFace = "Y";
-        break;
-      case 'R':
-        gameSadFace = "B";
-        break;
-      case 'Y':
-        gameSadFace = "G";
-        break;
-      default:
-        gameSadFace = "N/A";
-        break;
-      }
-    }
-    SmartDashboard.putNumber("seenColor", seenColor);
-*/
-    if (gamePad0.getPOV() == 90) {
-      colMotor.set(1);
-    } else {
-      // Color Wheel Moter Must Turn Clockwise
-      if (gamePad0.getRawButtonPressed(3)) {
-        rotatenum += 8;
-      } // rotatenum is number of rotations asked for x2; e.g. setting for 8 makes 4
-        // full rotations, setting for 7 gives 3.5 wheel rotations.
-      if (rotatenum > 0) {
-        colMotor.set(1);
-        if (nextColor == "B" && colorString == "G" && seenColor == 0) {
-          rotatenum -= 1;
-          seenColor = 1;
-        }
-        if (nextColor == "B" && colorString != "G" && seenColor == 1) {
-          seenColor = 0;
-        }
-        if (nextColor == "G" && colorString == "R" && seenColor == 0) {
-          rotatenum -= 1;
-          seenColor = 1;
-        }
-        if (nextColor == "G" && colorString != "R" && seenColor == 1) {
-          seenColor = 0;
-        }
-        if (nextColor == "R" && colorString == "Y" && seenColor == 0) {
-          rotatenum -= 1;
-          seenColor = 1;
-        }
-        if (nextColor == "R" && colorString != "Y" && seenColor == 1) {
-          seenColor = 0;
-        }
-        if (nextColor == "Y" && colorString == "B" && seenColor == 0) {
-          rotatenum -= 1;
-          seenColor = 1;
-        }
-        if (nextColor == "Y" && colorString != "B" && seenColor == 1) {
-          seenColor = 0;
-        }
-      } else if (gamePad0.getRawButton(2) && gameSadFace != nextColor) {
-        colMotor.set(1);
-        if (nextColor == "B" && colorString == "Y") {
-          nextColor = "Y";
-        }
-        if (nextColor == "Y" && colorString == "R") {
-          nextColor = "R";
-        }
-        if (nextColor == "R" && colorString == "G") {
-          nextColor = "G";
-        }
-        if (nextColor == "G" && colorString == "B") {
-          nextColor = "B";
-        }
-      } else {
-        nextColor = colorString;
-        colMotor.stopMotor();
-      }
 
-    }
     /*
      * if(ultrasonic1.getRangeMM()>0.1){range1 = ultrasonic1.getRangeMM();}
      * if(ultrasonic2.getRangeMM()>0.1){range2 = ultrasonic2.getRangeMM();}
@@ -901,7 +791,7 @@ public class Robot extends TimedRobot {
   public void turnThing(double angle, double time) {
     System.out.println("turning");
     setAngle = angle;
-    if((int)challengeTimer.get() == time) { //move forward to first ball
+    if(challengeTimer.get() <= time) { //move forward to first ball
       challengeTimer.stop();
       driveTrain.tankDrive(0, 0);
       if (Math.abs(angledYaw) <= 2) {
