@@ -86,6 +86,7 @@ public class Robot extends TimedRobot {
   private static final String kTask1 = "Task1";
   private static final String kTest = "TestOption";
   private static final String kFun = "FunOption";
+  private static final String kCatering = "Catering";
 
   public double leftStick;
   public double rightStick;
@@ -121,6 +122,9 @@ public class Robot extends TimedRobot {
   Ultrasonic ultrasonic2 = new Ultrasonic(ultrasonicPing2, ultrasonicEcho2);
   Ultrasonic ultrasonic3 = new Ultrasonic(ultrasonicPing3, ultrasonicEcho3);
   Servo simon = new Servo(0);
+
+  //test
+  DigitalInput limitSwitch = new DigitalInput(8);
 
   AHRS navx;
 
@@ -245,10 +249,13 @@ public class Robot extends TimedRobot {
     m_challenge.addOption("Task2", kTask2);
     m_challenge.addOption("Task3", kTask3);
     m_challenge.addOption("Task4", kTask4);
-    m_challange.addOption("test", kTest);
-    m_challange.addOption("Fun", kFun);
+    m_challenge.addOption("test", kTest);
+    m_challenge.addOption("Fun", kFun);
+    m_challenge.addOption("Catering", kCatering);
 
     navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte) 50);
+
+    Toggle stopTogg = new Toggle(limitSwitch::get, true, true);
 
     right0.setInverted(true);
     right1.setInverted(true);
@@ -480,7 +487,6 @@ public class Robot extends TimedRobot {
         routeX = x; // x
         routeMargin = 2;
         table.getEntry("pipeline").setNumber(ballPipeline);
-
       }
 
       // Path Red A
@@ -513,7 +519,6 @@ public class Robot extends TimedRobot {
         } else {
           navDrive = "Null";
         }
-
       }
 
       // Path Red B
@@ -543,7 +548,6 @@ public class Robot extends TimedRobot {
         } else {
           navDrive = "Null";
         }
-
       }
 
       // Path Blue A
@@ -576,54 +580,7 @@ public class Robot extends TimedRobot {
         } else {
           navDrive = "Null";
         }
-
       }
-
-    SmartDashboard.putNumber("challengeTimer", challengeTimer.get());
-    SmartDashboard.putNumber("route number", challengeTimer.get());
-  
-      switch (m_challengeSelected) {
-        case kComp:
-          // Put left auto targetting and shooting code here
-          //driveTrain.tankDrive(-.5, .5);
-          break;
-
-        //Use Yellow Limelight Snapshot setting
-        case kTask1:
-          if (challengeTimer.get() == 0) {
-            route = y;
-            challengeTimer.start();
-            table.getEntry("pipeline").setNumber(ballPipeline);
-          } 
-
-          if( route <= 0 ) { //blue config A
-            intakeOn = true;
-            autoIntake();
-
-            if ( challengeTimer.get() <= 1.0) { // following seconds are ~1 second(s) are shorter
-              navDrive = "Drive";
-            } else if ( challengeTimer.get() <= 3) {
-              navDrive = "null";
-            } else if ( challengeTimer.get() <= 4) {
-              turnThing(20, 4);
-            } else if ( challengeTimer.get() <= 5) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if ( challengeTimer.get() <= 7) {
-              navDrive = "null";
-            } else if ( challengeTimer.get() <= 8){
-              turnThing(-68, 8);
-            } else if ( challengeTimer.get() <= 10) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else if ( challengeTimer.get() <= 13) {
-              navDrive = "null";
-            } else if ( challengeTimer.get() <= 14){
-              turnThing(0, 14);
-            } else if ( challengeTimer.get() <= 20) {//this if is broken, also check if turn progress bollean is ok
-              navDrive = "Drive";
-            } else {
-              route = -1;
-              //challengeTimer.reset();
-            }
       // Path Blue B
       if (Math.abs(routeX - (9)) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
         challengeTimer.start();
@@ -654,10 +611,9 @@ public class Robot extends TimedRobot {
         } else {
           navDrive = "Null";
         }
-
       }
-
       break;
+    }
 
     case kTest:
 
@@ -665,6 +621,12 @@ public class Robot extends TimedRobot {
 
     case kFun:
 
+      break;
+    
+    case kCatering:
+      if (!stopTogg && v == 1) limeDrive(); //change limeDrive to be much slower
+      else if (!stopTogg) driveTrain.tankDrive(0.5,-0.5); //search in place cc
+      else driveTrain.tankDrive(0, 0);
       break;
 
     default:
