@@ -97,7 +97,7 @@ public class Robot extends TimedRobot {
   SpeedControllerGroup rightDrive = new SpeedControllerGroup(right0, right1);
   DifferentialDrive driveTrain = new DifferentialDrive(leftDrive, rightDrive);
 
-  AHRS navx;
+  //AHRS navx;
   String navDrive = "null";
   int setAngle = 0;
   double angledYaw;
@@ -163,13 +163,13 @@ public class Robot extends TimedRobot {
     left0.setInverted(true); //true for flash
     left1.setInverted(true); //true for flash
 
-    navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50);
-    navx.zeroYaw();
-    navx.reset();
+    //navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50);
+    //navx.zeroYaw();
+    //navx.reset();
     navDrive = "null";
 
-    curveTimer.stop();
-    curveTimer.reset();
+    //curveTimer.stop();
+    //curveTimer.reset();
 
     challengeTimer.stop();
     challengeTimer.reset();
@@ -194,8 +194,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
 
-    double yaw = navx.getYaw();
-    SmartDashboard.putNumber("Yaw",navx.getYaw());
+    //double yaw = navx.getYaw();
+    //SmartDashboard.putNumber("Yaw",navx.getYaw());
 
     final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     final NetworkTableEntry tx = table.getEntry("tx");
@@ -214,7 +214,7 @@ public class Robot extends TimedRobot {
     
     double ratioNavX;
 
-    if (Math.abs(yaw - setAngle) <= 180){
+    /*if (Math.abs(yaw - setAngle) <= 180){
       angledYaw = yaw - setAngle;
     }else{
       angledYaw = -Math.signum(yaw - setAngle)*(360-Math.abs(yaw - setAngle));
@@ -255,7 +255,7 @@ public class Robot extends TimedRobot {
     
         break;
   }
-  }
+  }*/
 
 }
   @Override
@@ -263,8 +263,8 @@ public class Robot extends TimedRobot {
 
     table.getEntry("ledMode").setNumber(3);
 
-    navx.zeroYaw();
-    navx.reset();
+    //navx.zeroYaw();
+    //navx.reset();
 
     curveTimer.stop();
     curveTimer.reset();
@@ -365,8 +365,6 @@ public class Robot extends TimedRobot {
 
     table.getEntry("ledMode").setNumber(3);
 
-    navx.zeroYaw();
-    navx.reset();
 
   }
 
@@ -403,9 +401,12 @@ public class Robot extends TimedRobot {
       navDrive = "null";
     }
 
-    if (gamePad0.getRawButton(5)){
-      navx.zeroYaw();
-      navx.reset();
+    if (gamePad0.getRawButton(6)){
+     // navx.zeroYaw();
+      //navx.reset();
+    }
+    if(gamePad0.getRawButton(5)) {
+      System.out.println(leftStick +","+ rightStick);
     }
 
 
