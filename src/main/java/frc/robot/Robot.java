@@ -649,8 +649,8 @@ public class Robot extends TimedRobot {
         break;
       
       case kCatering:
-        if (!stopTogg && v == 1) limeDrive(); //drive towards the ball
-        else if (!stopTogg) driveTrain.tankDrive(0.5,-0.5); //turn cc and search for a ball
+        if (!stopTogg.getToggle() && v == 1) limeDrive(); //drive towards the ball
+        else if (!stopTogg.getToggle()) driveTrain.tankDrive(0.5,-0.5); //turn cc and search for a ball
         else driveTrain.tankDrive(0, 0); //if stopTogg is true, do nothing
         break;
       
