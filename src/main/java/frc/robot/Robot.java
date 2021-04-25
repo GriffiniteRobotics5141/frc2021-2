@@ -83,7 +83,6 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_challange = new SendableChooser<>();
   
   //hehe
-  private Boolean isLimitSwitch;
   private final SendableChooser<Boolean> m_isLimitSwitch = new SendableChooser<>();
 
   private static final String kComp = "Competition";
@@ -266,8 +265,8 @@ public class Robot extends TimedRobot {
      * (the isInverted is adjusted appropriately for each BooleanSupplier) BooleanSupplier
      */
     SmartDashboard.putData("isLimitSwitch", m_isLimitSwitch);
-    m_isLimitSwitch.setDefaultOption("False", false);
     m_isLimitSwitch.addOption("True", true);
+    m_isLimitSwitch.setDefaultOption("False", false);
 
     navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte) 50);
 
@@ -469,9 +468,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    stopTogg = new Toggle( //BooleanSupplier is a boolean void type beat, and you can't pass params in method references so lambda it is
-                           SmartDashboard.getBoolean("isLimitSwitch", false) ? limitSwitch::get : () -> SmartDashboard.getBoolean("isLimitSwitch", true),
-                           SmartDashboard.getBoolean("isLimitSwitch", false), //isInverted (true iff limitSwitch exists, false otherwise)
+    stopTogg = new Toggle( //BooleanSupplier is a boolean void type beat, getSelected method exists
+                           m_isLimitSwitch.getSelected() ? limitSwitch::get : () -> m_isLimitSwitch::getSelected,
+                           m_isLimitSwitch.getSelected(), //isInverted (true if limitSwitch exists, false otherwise)
                            true  //default value
                          );
   }
@@ -643,12 +642,10 @@ public class Robot extends TimedRobot {
         }
         break;
       
-      case kTest:
-      
+      case kTest:   
         break;
       
-      case kFun:
-      
+      case kFun:      
         break;
       
       case kCatering:
