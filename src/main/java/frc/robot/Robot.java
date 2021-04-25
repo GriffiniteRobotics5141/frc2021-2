@@ -81,6 +81,10 @@ public class Robot extends TimedRobot {
 
   private String m_challengeSelected;
   private final SendableChooser<String> m_challange = new SendableChooser<>();
+  
+  //hehe
+  private Boolean isLimitSwitch;
+  private final SendableChooser<Boolean> m_isLimitSwitch = new SendableChooser<>();
 
   private static final String kComp = "Competition";
   private static final String kTask1 = "Task1";
@@ -123,8 +127,10 @@ public class Robot extends TimedRobot {
   Ultrasonic ultrasonic3 = new Ultrasonic(ultrasonicPing3, ultrasonicEcho3);
   Servo simon = new Servo(0);
 
-  //test
+  // The limitSwitch doesn't exist currently, but there's no easy way to check for existence with a DigitalInput
+  // So it'll be governed by SendableChooser m_isLimitSwitch
   DigitalInput limitSwitch = new DigitalInput(8);
+  Toggle stopTogg;
 
   AHRS navx;
 
@@ -252,10 +258,18 @@ public class Robot extends TimedRobot {
     m_challenge.addOption("test", kTest);
     m_challenge.addOption("Fun", kFun);
     m_challenge.addOption("Catering", kCatering);
+    
+    /*
+     * This is convoluted, but this'll never see the light of next year (so it shall stay)
+     * if isLimitSwitch is true, use the limitSwitch as the BooleanSupplier
+     * if isLimitSwitch is false, use isLimitSwitch as the BooleanSupplier
+     * (the isInverted is adjusted appropriately for each BooleanSupplier) BooleanSupplier
+     */
+    SmartDashboard.putData("isLimitSwitch", m_isLimitSwitch);
+    m_isLimitSwitch.setDefaultOption("False", false);
+    m_isLimitSwitch.addOption("True", true);
 
     navx = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte) 50);
-
-    Toggle stopTogg = new Toggle(limitSwitch::get, true, true);
 
     right0.setInverted(true);
     right1.setInverted(true);
@@ -331,7 +345,7 @@ public class Robot extends TimedRobot {
       doAutoPilotNow = false;
       autoPilotState = false;
     }
-
+    
     if (autoPilotState) {
       if (v == 1) {
         //driveTrain.tankDrive(sineX+(sineY), -(sineX)+(sineY));
@@ -355,7 +369,7 @@ public class Robot extends TimedRobot {
         doAutoPilotNow = false;
       }
     }
-
+    
     // disXnum = ((h2-h1)/Math.tan((a1-y)*Math.PI/180));
     disXnum = (h2 - h1) / (Math.tan((a1 + y) * Math.PI / 180)) + 9; // +10 is distance between center of chamber and
                                                                     // limelight
@@ -367,19 +381,19 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("D-Pad", gamePad0.getPOV());
     SmartDashboard.putNumber("Yaw", navx.getYaw());
     // SmartDashboard.putNumber("NavxStep",navxStep);
-
+    
     SmartDashboard.putBoolean("Auto", doAutoPilotNow);
     SmartDashboard.putBoolean("isBall1", Ball1);
     SmartDashboard.putBoolean("isBall2", Ball2);
     SmartDashboard.putBoolean("isBall3", Ball3);
-
+    
     SmartDashboard.putNumber("DisXNum", disXnum);
     SmartDashboard.putNumber("DifYNum", difYnum);
     SmartDashboard.putNumber("aimnum", aimnum);
     SmartDashboard.putNumber("airtime", airtim);
-
+    
     double ratioNavX;
-
+    
     if (Math.abs(yaw - setAngle) <= 180) {
       angledYaw = yaw - setAngle;
     } else {
@@ -393,7 +407,7 @@ public class Robot extends TimedRobot {
     } else {
       ratioNavX = -1;
     }
-
+    
     // double sineWithSignum =
     // Math.signum(ratioNavX)*(1-min)*Math.sin(ratioNavX*Math.PI/2)+(1+min)/2;
     double sineNavX = Math.signum(ratioNavX) * ((maxCorrectNavX - minCorrectNavX) / 2)
@@ -401,25 +415,28 @@ public class Robot extends TimedRobot {
 
     if (navDrive.length() > 0) {
       switch (navDrive.charAt(0)) {
-      default:
-        minCorrectNavX = .34;
-        maxCorrectNavX = .65;
-        AOC = 85;
-        break;
-      case 'T':
-        minCorrectNavX = .34; // .34
-        maxCorrectNavX = .5;
-        AOC = 85;
+        default:
+          minCorrectNavX = .34;
+          maxCorrectNavX = .65;
+          AOC = 85;
+          break;
+        case 'T':
+          minCorrectNavX = .34; // .34
+          maxCorrectNavX = .5;
+          AOC = 85;
 
-        driveTrain.tankDrive(-sineNavX, sineNavX);
-        break;
-      case 'D':
-        minCorrectNavX = 0.51;// .4 .51
-        maxCorrectNavX = 0.81;// .75 .81
-        AOC = 15;// 15
+          driveTrain.tankDrive(-sineNavX, sineNavX);
+          break;
+        case 'D':
+          minCorrectNavX = 0.51;// .4 .51
+          maxCorrectNavX = 0.81;// .75 .81
+          AOC = 15;// 15
 
-        double cCorrection = (-sineNavX > 0) ? -sineNavX : minCorrectNavX;
-        double ccCorrection = (sineNavX > 0) ? sineNavX : minCorrectNavX;
+          double cCorrection = (-sineNavX > 0) ? -sineNavX : minCorrectNavX;
+          double ccCorrection = (sineNavX > 0) ? sineNavX : minCorrectNavX;
+          break;
+      }
+    }
 
     autonamousTimer.stop();
     autoPeriod.reset();
@@ -447,6 +464,17 @@ public class Robot extends TimedRobot {
     simon.set(0.65); // set the camera to 22 deg
 
   }
+  /**
+   *
+   */
+  @Override
+  public void autonomousInit() {
+    stopTogg = new Toggle( //BooleanSupplier is a boolean void type beat, and you can't pass params in method references so lambda it is
+                           SmartDashboard.getBoolean("isLimitSwitch", false) ? limitSwitch::get : () -> SmartDashboard.getBoolean("isLimitSwitch", true),
+                           SmartDashboard.getBoolean("isLimitSwitch", false), //isInverted (true iff limitSwitch exists, false otherwise)
+                           true  //default value
+                         );
+  }
 
   /**
    * This function is called periodically during autonomous.
@@ -454,7 +482,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     doUltraSonics();
-
+    
     /*
      * switch (m_autoSelected) { case kLeft: // Put left auto code here
      * driveTrain.tankDrive(-.5, .5); break; case kRight: driveTrain.tankDrive(.5,
@@ -470,169 +498,168 @@ public class Robot extends TimedRobot {
      * break; case kOff: break; default: // funny driveTrain.tankDrive(0, 0); break;
      * }
      */
-
+    
     SmartDashboard.putNumber("challengeTimer", challengeTimer.get());
     SmartDashboard.putNumber("routeY number", challengeTimer.get());
-
-    switch (m_challengeSelected) {
-    case kComp:
-      // Put left auto targetting and shooting code here
-      // driveTrain.tankDrive(-.5, .5);
-      break;
-
-    // Use Yellow Limelight Snapshot setting
-    case kTask1: // please initialize with comp first
-      if (challengeTimer.get() == 0) {
-        routeY = y; // y
-        routeX = x; // x
-        routeMargin = 2;
-        table.getEntry("pipeline").setNumber(ballPipeline);
-      }
-
-      // Path Red A
-      if (Math.abs(routeX - (0)) <= routeMargin && Math.abs(routeY - (-8)) <= routeMargin) {
-        challengeTimer.start();
-        intakeOn = true;
-        autoIntake();
-
-        if ((challengeTimer.get()) <= .8) {
-          limeDrive(.6, -4);
-        } else if (((int) challengeTimer.get()) <= 2) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) <= 3) {
-          limeTurn(35, 3);
-        } else if ((challengeTimer.get()) <= 4.8) {
-          limeDrive(.62, -4);
-        } else if ((challengeTimer.get()) <= 6.5) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) <= 7) {
-          limeTurn(-66, 7);
-        } else if (((int) challengeTimer.get()) <= 9) {
-          limeDrive(.58, -4);
-        } else if ((challengeTimer.get()) < 12) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 12) {
-          turnThing(0, 12);
-        } else if ((challengeTimer.get()) <= 17.55) {
-          setAngle = 0;
-          navDrive = "Drive";
-        } else {
-          navDrive = "Null";
-        }
-      }
-
-      // Path Red B
-      if (Math.abs(routeX - (-22.8)) <= routeMargin && Math.abs(routeY - (-8)) <= routeMargin) {
-        challengeTimer.start();
-        intakeOn = true;
-        autoIntake();
-
-        if (((int) challengeTimer.get()) <= 1) {
-          limeTurn(-25, 1);
-        } else if (((int) challengeTimer.get()) <= 2) {
-          limeDrive(.58, -4); // -1.7
-        } else if (((int) challengeTimer.get()) <= 5) {
-          turnThing(36, 5);
-        } else if (((int) challengeTimer.get()) <= 6) {
-          limeDrive(.62, -2);
-        } else if (((int) challengeTimer.get()) <= 9) {
-          turnThing(-38, 9);
-        } else if (((int) challengeTimer.get()) <= 10) {
-          limeDrive(.62, -2);
-        } else if (challengeTimer.get() < 13) {// this if is broken, also check if turn progress bollean is ok
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 13) {
-          turnThing(0, 11);
-        } else if (challengeTimer.get() < 16.5) {// this if is broken, also check if turn progress bollean is ok
-          navDrive = "Drive";
-        } else {
-          navDrive = "Null";
-        }
-      }
-
-      // Path Blue A
-      if (Math.abs(routeX - (20)) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
-        challengeTimer.start();
-        intakeOn = true;
-        autoIntake();
-
-        if ((challengeTimer.get()) <= 3.3) {
-          limeDrive(.58, -3);
-        } else if ((challengeTimer.get()) < 5) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 5) {
-          limeTurn(-66, 5);
-        } else if ((challengeTimer.get()) < 7.8) {
-          limeDrive(.58, -4);
-        } else if ((challengeTimer.get()) < 10) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 10) {
-          limeTurn(20, 10);
-        } else if ((challengeTimer.get()) <= 11.7) {
-          limeDrive(.62, -4);
-        } else if ((challengeTimer.get()) <= 13) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 13) {
-          turnThing(0, 11);
-        } else if (challengeTimer.get() < 15.2) {// this if is broken, also check if turn progress bollean is ok
-          setAngle = 0;
-          navDrive = "Drive";
-        } else {
-          navDrive = "Null";
-        }
-      }
-      // Path Blue B
-      if (Math.abs(routeX - (9)) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
-        challengeTimer.start();
-        intakeOn = true;
-        autoIntake();
-
-        if ((challengeTimer.get()) <= 2.75) {
-          limeDrive(.60, -2);
-        } else if ((challengeTimer.get()) < 5) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 5) {
-          limeTurn(-38, 5);
-        } else if ((challengeTimer.get()) <= 7) {
-          limeDrive(.62, -2);
-        } else if (challengeTimer.get() < 9) {
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 9) {
-          limeTurn(36, 9);
-        } else if ((challengeTimer.get()) <= 10.75) {
-          limeDrive(.62, -2);
-        } else if (challengeTimer.get() < 12) {// this if is broken, also check if turn progress bollean is ok
-          navDrive = "Null";
-        } else if (((int) challengeTimer.get()) == 12) {
-          turnThing(0, 11);
-        } else if (challengeTimer.get() < 12.75) {// this if is broken, also check if turn progress bollean is ok
-          setAngle = 0;
-          navDrive = "Drive";
-        } else {
-          navDrive = "Null";
-        }
-      }
-      break;
-    }
-
-    case kTest:
-
-      break;
-
-    case kFun:
-
-      break;
     
-    case kCatering:
-      if (!stopTogg && v == 1) limeDrive(); //change limeDrive to be much slower
-      else if (!stopTogg) driveTrain.tankDrive(0.5,-0.5); //search in place cc
-      else driveTrain.tankDrive(0, 0);
-      break;
-
-    default:
-      break;
-    }
-
+    switch (m_challengeSelected) {
+      case kComp:
+        // Put left auto targetting and shooting code here
+        // driveTrain.tankDrive(-.5, .5);
+        break;
+    
+      // Use Yellow Limelight Snapshot setting
+      case kTask1: // please initialize with comp first
+        if (challengeTimer.get() == 0) {
+          routeY = y; // y
+          routeX = x; // x
+          routeMargin = 2;
+          table.getEntry("pipeline").setNumber(ballPipeline);
+        }
+        
+        // Path Red A
+        if (Math.abs(routeX - (0)) <= routeMargin && Math.abs(routeY - (-8)) <= routeMargin) {
+          challengeTimer.start();
+          intakeOn = true;
+          autoIntake();
+        
+          if ((challengeTimer.get()) <= .8) {
+            limeDrive(.6, -4);
+          } else if (((int) challengeTimer.get()) <= 2) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) <= 3) {
+            limeTurn(35, 3);
+          } else if ((challengeTimer.get()) <= 4.8) {
+            limeDrive(.62, -4);
+          } else if ((challengeTimer.get()) <= 6.5) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) <= 7) {
+            limeTurn(-66, 7);
+          } else if (((int) challengeTimer.get()) <= 9) {
+            limeDrive(.58, -4);
+          } else if ((challengeTimer.get()) < 12) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 12) {
+            turnThing(0, 12);
+          } else if ((challengeTimer.get()) <= 17.55) {
+            setAngle = 0;
+            navDrive = "Drive";
+          } else {
+            navDrive = "Null";
+          }
+        }
+        
+        // Path Red B
+        if (Math.abs(routeX - (-22.8)) <= routeMargin && Math.abs(routeY - (-8)) <= routeMargin) {
+          challengeTimer.start();
+          intakeOn = true;
+          autoIntake();
+        
+          if (((int) challengeTimer.get()) <= 1) {
+            limeTurn(-25, 1);
+          } else if (((int) challengeTimer.get()) <= 2) {
+            limeDrive(.58, -4); // -1.7
+          } else if (((int) challengeTimer.get()) <= 5) {
+            turnThing(36, 5);
+          } else if (((int) challengeTimer.get()) <= 6) {
+            limeDrive(.62, -2);
+          } else if (((int) challengeTimer.get()) <= 9) {
+            turnThing(-38, 9);
+          } else if (((int) challengeTimer.get()) <= 10) {
+            limeDrive(.62, -2);
+          } else if (challengeTimer.get() < 13) {// this if is broken, also check if turn progress bollean is ok
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 13) {
+            turnThing(0, 11);
+          } else if (challengeTimer.get() < 16.5) {// this if is broken, also check if turn progress bollean is ok
+            navDrive = "Drive";
+          } else {
+            navDrive = "Null";
+          }
+        }
+        
+        // Path Blue A
+        if (Math.abs(routeX - (20)) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
+          challengeTimer.start();
+          intakeOn = true;
+          autoIntake();
+        
+          if ((challengeTimer.get()) <= 3.3) {
+            limeDrive(.58, -3);
+          } else if ((challengeTimer.get()) < 5) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 5) {
+            limeTurn(-66, 5);
+          } else if ((challengeTimer.get()) < 7.8) {
+            limeDrive(.58, -4);
+          } else if ((challengeTimer.get()) < 10) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 10) {
+            limeTurn(20, 10);
+          } else if ((challengeTimer.get()) <= 11.7) {
+            limeDrive(.62, -4);
+          } else if ((challengeTimer.get()) <= 13) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 13) {
+            turnThing(0, 11);
+          } else if (challengeTimer.get() < 15.2) {// this if is broken, also check if turn progress bollean is ok
+            setAngle = 0;
+            navDrive = "Drive";
+          } else {
+            navDrive = "Null";
+          }
+        }
+        
+        // Path Blue B
+        if (Math.abs(routeX - (9)) <= routeMargin && Math.abs(routeY - (7)) <= routeMargin) {
+          challengeTimer.start();
+          intakeOn = true;
+          autoIntake();
+        
+          if ((challengeTimer.get()) <= 2.75) {
+            limeDrive(.60, -2);
+          } else if ((challengeTimer.get()) < 5) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 5) {
+            limeTurn(-38, 5);
+          } else if ((challengeTimer.get()) <= 7) {
+            limeDrive(.62, -2);
+          } else if (challengeTimer.get() < 9) {
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 9) {
+            limeTurn(36, 9);
+          } else if ((challengeTimer.get()) <= 10.75) {
+            limeDrive(.62, -2);
+          } else if (challengeTimer.get() < 12) {// this if is broken, also check if turn progress bollean is ok
+            navDrive = "Null";
+          } else if (((int) challengeTimer.get()) == 12) {
+            turnThing(0, 11);
+          } else if (challengeTimer.get() < 12.75) {// this if is broken, also check if turn progress bollean is ok
+            setAngle = 0;
+            navDrive = "Drive";
+          } else {
+            navDrive = "Null";
+          }
+        }
+        break;
+      
+      case kTest:
+      
+        break;
+      
+      case kFun:
+      
+        break;
+      
+      case kCatering:
+        if (!stopTogg && v == 1) limeDrive(); //drive towards the ball
+        else if (!stopTogg) driveTrain.tankDrive(0.5,-0.5); //turn cc and search for a ball
+        else driveTrain.tankDrive(0, 0); //if stopTogg is true, do nothing
+        break;
+      
+      default:
+        break;
+    }      
   }
 
   @Override
