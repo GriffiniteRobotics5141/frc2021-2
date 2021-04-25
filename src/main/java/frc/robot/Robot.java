@@ -469,7 +469,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     stopTogg = new Toggle( //BooleanSupplier is a boolean void type beat, getSelected method exists
-                           m_isLimitSwitch.getSelected() ? limitSwitch::get : () -> m_isLimitSwitch::getSelected,
+                           m_isLimitSwitch.getSelected() ? limitSwitch::get : m_isLimitSwitch::getSelected,
                            m_isLimitSwitch.getSelected(), //isInverted (true if limitSwitch exists, false otherwise)
                            true  //default value
                          );
